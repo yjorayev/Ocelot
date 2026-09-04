@@ -1,26 +1,34 @@
 Websockets
 ==========
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
+.. _WebSocketsProxyMiddleware: https://github.com/ThreeMammals/Ocelot/blob/main/src/Ocelot/WebSockets/WebSocketsProxyMiddleware.cs
 
-    * `WebSockets Standard <https://websockets.spec.whatwg.org/>`_ by WHATWG organization
-    * `The WebSocket Protocol <https://datatracker.ietf.org/doc/html/rfc6455>`_ by Internet Engineering Task Force (IETF) organization
+  * Ocelot Middleware: `WebSocketsProxyMiddleware`_
+  * RFC 6455 Specification: `The WebSocket Protocol <https://datatracker.ietf.org/doc/html/rfc6455>`_ by Internet Engineering Task Force (IETF) organization
+  * JavaScript Living Standard: `WebSockets Standard <https://websockets.spec.whatwg.org/>`_ by WHATWG organization
+  * Mozilla Developer Network: `The WebSocket API (WebSockets) <https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API>`_
 
-Ocelot supports proxying `WebSockets <https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API>`_ with some extra bits.
-This functionality was requested in `issue 212 <https://github.com/ThreeMammals/Ocelot/issues/212>`_. 
+Ocelot supports proxying `WebSockets <https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API>`_ [#f1]_ with some extra bits.
 
-In order to get *WebSocket* proxying working with Ocelot you need to do the following.
-In your ``Configure`` method you need to tell your application to use *WebSockets*:
+Configuration
+-------------
+
+To enable *WebSockets* proxying with Ocelot, you need to do the following in your `Program`_:
 
 .. code-block:: csharp
+  :emphasize-lines: 2
 
-    Configure(app =>
-    {
-        app.UseWebSockets();
-        app.UseOcelot().Wait();
-    })
+  var app = builder.Build();
+  app.UseWebSockets(); // required for Ocelot 24.x and earlier; called automatically since version 25.0
+  await app.UseOcelot();
+  await app.RunAsync();
 
-Then in your **ocelot.json** add the following to proxy a Route using *WebSockets*:
+Then, in your `ocelot.json`_, add the following to proxy a route using *WebSockets*:
 
 .. code-block:: json
+  :emphasize-lines: 4
 
   {
     "UpstreamPathTemplate": "/",
@@ -31,64 +39,64 @@ Then in your **ocelot.json** add the following to proxy a Route using *WebSocket
     ]
   }
 
-With this configuration set Ocelot will match any *WebSocket* traffic that comes in on / and proxy it to ``localhost:5001/ws``.
-To make this clearer Ocelot will receive messages from the upstream client, proxy these to the downstream service, receive messages from the downstream service and proxy these to the upstream client.
+With this configuration, Ocelot will match any *WebSockets* traffic that comes in on / and proxy it to ``localhost:5001/ws``.
+For clarity, Ocelot will receive messages from the upstream client, proxy them to the downstream service, receive messages from the downstream service, and then proxy them back to the upstream client.
 
-Links
------
+Handy Links
+-----------
 
 * WHATWG: `WebSockets Standard <https://websockets.spec.whatwg.org/>`_
 * Mozilla Developer Network: `The WebSocket API (WebSockets) <https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API>`_
 * Microsoft Learn: `WebSockets support in ASP.NET Core <https://learn.microsoft.com/en-us/aspnet/core/fundamentals/websockets>`_
 * Microsoft Learn: `WebSockets support in .NET <https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/websockets>`_
 
-SignalR
--------
+.. _ws-signalr:
 
-    Welcome to `Real-time ASP.NET with SignalR <https://dotnet.microsoft.com/en-us/apps/aspnet/signalr>`_
+SignalR [#f2]_
+--------------
 
-Ocelot supports proxying *SignalR*.
-This functionality was requested in `issue 344 <https://github.com/ThreeMammals/Ocelot/issues/344>`_. 
-In order to get *WebSocket* proxying working with Ocelot you need to do the following.
+  Welcome to `Real-time ASP.NET with SignalR <https://dotnet.microsoft.com/en-us/apps/aspnet/signalr>`_
 
-**First**, install `SignalR Client <https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client>`_ NuGet package:
+Ocelot supports proxying *SignalR*. To enable this with Ocelot, you need to do the following:
 
-.. code-block:: powershell
+First, install the `SignalR Client <https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client>`_ NuGet package:
 
-    NuGet\Install-Package Microsoft.AspNetCore.SignalR.Client
+.. code-block:: shell
 
-The package is deprecated, but `new versions <https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client#versions-body-tab>`_ are still built from the source code.
-So, SignalR is `the part <https://github.com/dotnet/aspnetcore/tree/main/src/SignalR>`_ of the ASP.NET Framework which can be referenced like:
+  dotnet add package Microsoft.AspNetCore.SignalR.Client
 
-.. code-block:: xml
+.. _break: http://break.do
+
+  **Note**: SignalR is `part of the ASP.NET Core <https://github.com/dotnet/aspnetcore/tree/main/src/SignalR>`_ and can be referenced as follows:
+
+  .. code-block:: xml
 
     <ItemGroup>
       <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
-More information on framework compatibility can be found in instrictions: `Use ASP.NET Core APIs in a class library <https://learn.microsoft.com/en-us/aspnet/core/fundamentals/target-aspnetcore>`_.
+  More information on framework compatibility can be found in the instructions: `Use ASP.NET Core APIs in a class library <https://learn.microsoft.com/en-us/aspnet/core/fundamentals/target-aspnetcore>`_.
 
-**Second**, you need to tell your application to use *SignalR*.
-Complete reference is here: `ASP.NET Core SignalR configuration <https://learn.microsoft.com/en-us/aspnet/core/signalr/configuration>`_
+Second, you need to configure your application to use *SignalR*.
+A complete reference can be found here: `ASP.NET Core SignalR configuration <https://learn.microsoft.com/en-us/aspnet/core/signalr/configuration>`_.
 
 .. code-block:: csharp
 
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddOcelot();
-        services.AddSignalR();
-    }
+  builder.Services.AddOcelot(builder.Configuration);
+  builder.Services.AddSignalR();
 
-Pay attention to configuration of transport level of *WebSockets*,
-so `configure allowed transports <https://learn.microsoft.com/en-us/aspnet/core/signalr/configuration#configure-allowed-transports>`_ to allow *WebSockets* connections.
+.. _break2: http://break.do
 
-**Then** in your **ocelot.json** add the following to proxy a Route using SignalR.
-Note normal Ocelot routing rules apply the main thing is the scheme which is set to ``ws``.
+  **Note**: Make sure to pay attention to the transport-level configuration for *WebSockets*.
+  Ensure that allowed transports are properly configured to enable *WebSockets* connections: `ASP.NET Core SignalR configuration <https://learn.microsoft.com/en-us/aspnet/core/signalr/configuration>`_.
+
+Next, include the following in your `ocelot.json`_ file to proxy a route using *SignalR*.
+Note that standard Ocelot routing rules apply; the key aspect is that the scheme is set to ``ws`` (*WebSockets*).
 
 .. code-block:: json
+  :emphasize-lines: 4
 
   {
-    "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
     "UpstreamPathTemplate": "/gateway/{catchAll}",
     "DownstreamPathTemplate": "/{catchAll}",
     "DownstreamScheme": "ws",
@@ -97,102 +105,179 @@ Note normal Ocelot routing rules apply the main thing is the scheme which is set
     ]
   }
 
+.. _ws-secure:
+
 WebSocket Secure
 ----------------
 
-If you define a route with Secured WebSocket protocol, use the ``wss`` scheme:
+If you define a route with the *secured WebSockets* protocol, use the ``wss`` scheme:
 
 .. code-block:: json
 
-  {
-    "DownstreamScheme": "wss",
-    // ...
-  }
+  "DownstreamScheme": "wss",
 
-Keep in mind: you can use WebSocket SSL for both `SignalR <#signalr>`_ and `WebSockets <#websockets>`__.
+Keep in mind that you can use WebSocket SSL for both :ref:`SignalR <ws-signalr>` and :doc:`../features/websockets`.
 
-To understand ``wss`` scheme, browse to this:
+  **Note**: To understand ``wss`` scheme, browse to this documentation:
 
-* Microsoft Learn: `Secure your connection with TLS/SSL <https://learn.microsoft.com/en-us/windows/uwp/networking/websockets#secure-your-connection-with-tlsssl>`_
-* IETF | The WebSocket Protocol: `WebSocket URIs <https://datatracker.ietf.org/doc/html/rfc6455#section-3>`_
+  * IETF | The WebSocket Protocol: `WebSocket URIs <https://datatracker.ietf.org/doc/html/rfc6455#section-3>`_
+  * Microsoft Learn: `Secure your connection with TLS/SSL <https://learn.microsoft.com/en-us/windows/uwp/networking/websockets#secure-your-connection-with-tlsssl>`_
+  * Microsoft Learn: `Search for "secure websocket" <https://learn.microsoft.com/en-us/search/?terms=secure%20websocket>`_
 
-If you have questions, it may be helpful to search for documentation on MS Learn:
-
-* `Search for "secure websocket" <https://learn.microsoft.com/en-us/search/?terms=secure%20websocket>`_
-
-SSL Errors
-^^^^^^^^^^
-
-If you want to ignore SSL warnings (errors), set the following in your Route config:
+If you want to ignore SSL warnings (errors) [#f3]_, configure your route as follows:
 
 .. code-block:: json
 
-  {
-    "DownstreamScheme": "wss",
-    "DangerousAcceptAnyServerCertificateValidator": true,
-    // ...
-  }
+  "DownstreamScheme": "wss",
+  "DangerousAcceptAnyServerCertificateValidator": true,
 
-**But we don't recommend doing this!** Read the official notes regarding :ref:`ssl-errors` in the :doc:`../features/configuration` doc,
-where you will also find best practices for your environments.
+*However, we strongly advise against this!*
+Refer to the official notes regarding :ref:`ssl-errors` in the :doc:`../features/configuration` documentation.
+There, you can also explore best practices tailored for your environments.
 
-**Note**, the ``wss`` scheme fake validator was added by `PR 1377 <https://github.com/ThreeMammals/Ocelot/pull/1377>`_,
-as a part of issues `1375 <https://github.com/ThreeMammals/Ocelot/issues/1375>`_, `1237 <https://github.com/ThreeMammals/Ocelot/issues/1237>`_ and etc.
-This life hacking feature for self-signed SSL certificates is available in version `20.0 <https://github.com/ThreeMammals/Ocelot/releases/tag/20.0.0>`_.
-It will be removed and/or reworked in future releases. See the :ref:`ssl-errors` section for details.
+.. _ws-supported:
 
 Supported
 ---------
 
-1. :doc:`../features/loadbalancer`
-2. :doc:`../features/routing`
-3. :doc:`../features/servicediscovery`
+1. :doc:`../features/routing`
+2. :doc:`../features/loadbalancer`
+3. :ref:`Security Options <routing-security-options>` [#f4]_
+4. :doc:`../features/servicediscovery`
 
-This means that you can set up your downstream services running *WebSockets* and either have multiple **DownstreamHostAndPorts** in your Route config,
-or hook your Route into a service discovery provider and then load balance requests... Which we think is pretty cool.
+This means you can configure your downstream services to run *WebSockets* and either:
+
+* Include multiple ``DownstreamHostAndPorts`` in your route configuration.
+* Connect your route to a :doc:`../features/servicediscovery` provider.
+  This allows you to load balance requests, which we think is pretty cool!
 
 Not Supported
 -------------
 
-Unfortunately a lot of Ocelot features are non *WebSocket* specific, such as header and http client stuff.
-We have listed what will not work below:
+Unfortunately, many Ocelot features are not specific to *WebSockets*, such as header handling and HTTP client functionalities.
+Below is a list of features that will not work:
 
 1. :doc:`../features/tracing`
-2. :doc:`../features/requestid`
-3. :doc:`../features/requestaggregation`
+2. :doc:`../features/logging` :ref:`lg-request-id`
+3. :doc:`../features/aggregation`
 4. :doc:`../features/ratelimiting`
 5. :doc:`../features/qualityofservice`
-6. :doc:`../features/middlewareinjection`
+6. :doc:`../features/middlewareinjection` (except the :ref:`mi-ocelotpipelineconfiguration-class` ``WebSocketsMiddlewareType`` and ``WebSocketsMiddleware`` properties, see :ref:`Sample <ws-sample>`)
 7. :doc:`../features/headerstransformation`
 8. :doc:`../features/delegatinghandlers`
 9. :doc:`../features/claimstransformation`
 10. :doc:`../features/caching`
-11. :doc:`../features/authentication` [#f1]_
+11. :doc:`../features/authentication` [#f5]_
 12. :doc:`../features/authorization`
 
-We are not 100% sure what will happen with this feature when it gets into the wild, so please make sure you test thoroughly! 
+We cannot be entirely sure how this feature will behave once it is widely used. Therefore, thorough testing is strongly recommended!
 
-Future
-------
+.. _ws-sample:
 
-*Websockets* and *SignalR* are being developed intensively by the .NET community, so you need to watch for trends, releases in official docs regularly:
+Sample [#f6]_
+-------------
+
+  | **Project**: `samples <https://github.com/ThreeMammals/Ocelot/tree/main/samples>`_ / `WebSocket <https://github.com/ThreeMammals/Ocelot/tree/main/samples/WebSocket>`_
+  | **Solution**: `Ocelot.Samples.slnx <https://github.com/ThreeMammals/Ocelot/blob/main/Ocelot.Samples.slnx>`_
+
+The ``Ocelot.Samples.WebSocket.csproj`` sample project demonstrates how to proxy *WebSocket* connections with a customized buffer size
+by subclassing `WebSocketsProxyMiddleware`_ and registering it via ``OcelotPipelineConfiguration``:
+
+.. code-block:: csharp
+
+  public class MyWebSocketsProxyMiddleware : WebSocketsProxyMiddleware
+  {
+      protected override int BufferSize => 65536; // 64 KB for high-throughput streams (e.g. HTTP.sys video streaming)
+  
+      public MyWebSocketsProxyMiddleware(RequestDelegate next, IOcelotLoggerFactory logging, IWebSocketsFactory factory)
+          : base(next, logging, factory) { }
+  }
+
+The custom middleware type is then registered through ``WebSocketsMiddlewareType`` option of the :ref:`mi-ocelotpipelineconfiguration-class`:
+
+.. code-block:: csharp
+
+  var wsPipeline = new OcelotPipelineConfiguration
+  {
+      WebSocketsMiddlewareType = typeof(MyWebSocketsProxyMiddleware),
+  };
+  await app.UseOcelot(wsPipeline);
+
+Alternatively, the same can be achieved with a delegate via ``WebSocketsMiddleware``:
+
+.. code-block:: csharp
+
+  var wsPipeline = new OcelotPipelineConfiguration
+  {
+      WebSocketsMiddleware = (context, next) =>
+      {
+          Task Next(HttpContext ctx) => next();
+          var loggerFactory = context.RequestServices.GetRequiredService<IOcelotLoggerFactory>();
+          var wsFactory = context.RequestServices.GetRequiredService<IWebSocketsFactory>();
+          var middleware = new MyWebSocketsProxyMiddleware(Next, loggerFactory, wsFactory);
+          return middleware.Invoke(context);
+      },
+  };
+  await app.UseOcelot(wsPipeline);
+
+When ``WebSocketsMiddlewareType`` is set, it takes **priority** over ``WebSocketsMiddleware`` and the delegate is ignored.
+For the full reference, see the :ref:`mi-ocelotpipelineconfiguration-class` section in :doc:`../features/middlewareinjection` chapter.
+
+.. note::
+  Starting from Ocelot version `25.0`_, ``app.UseWebSockets()`` is called internally during Ocelot pipeline setup.
+  You no longer need to call it explicitly before ``await app.UseOcelot()``.
+
+Roadmap
+-------
+
+*WebSockets* and *SignalR* are being actively developed by the .NET community.
+It is important to stay updated with trends and regularly check for new releases in the official documentation:
 
 * `WebSockets docs <https://learn.microsoft.com/en-us/aspnet/core/fundamentals/websockets>`_
 * `SignalR docs <https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction>`_
 
-As a team, we cannot advise you on development,
-but feel free to ask questions, get coding recipes in the `Discussions <https://github.com/ThreeMammals/Ocelot/discussions>`_ space of the repository. |octocat|
+As a team, we are unable to provide direct development advice.
+However, feel free to ask questions or explore coding recipes in `Discussions <https://github.com/ThreeMammals/Ocelot/discussions>`_ of the repository.
+Additionally, we welcome any bug reports, enhancement suggestions, or proposals related to this feature. |octocat|
 
-.. |octocat| image:: https://github.githubassets.com/images/icons/emoji/octocat.png
-  :alt: octocat
-  :width: 23
-
-Also, we welcome any bug reports, enhancements or proposals regarding this feature.
-
-The Ocelot team considers the current impementation of WebSockets feature obsolete, based on the `WebSocketsProxyMiddleware <https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20WebSocketsProxyMiddleware&type=code>`_ class.
-Websockets are the part of ASP.NET Core framework having native `WebSocketMiddleware <https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.websockets.websocketmiddleware>`_ class.
-We have a strong intention to migrate or at least redesign the feature, see `issue 1707 <https://github.com/ThreeMammals/Ocelot/issues/1707>`_.
+.. note::
+  The Ocelot team considers the current implementation of the *WebSockets* feature to be obsolete, as it is based on the `WebSocketsProxyMiddleware`_ class.
+  *WebSockets* are a part of the ASP.NET Core framework, which includes the native `WebSocketMiddleware`_ class.
+  We have a strong intention to either migrate or redesign this feature. For more details, see issue `1707`_.
 
 """"
 
-.. [#f1] If anyone requests it, we might be able to do something with basic authentication.
+.. [#f1] The :doc:`../features/websockets` functionality was requested in issue `212 <https://github.com/ThreeMammals/Ocelot/issues/212>`_ and introduced in version `5.3.0`_.
+.. [#f2] The :ref:`SignalR <ws-signalr>` functionality was requested in issue `344`_ and published in version `8.0.7`_.
+.. [#f3] The ":ref:`ws-secure`" feature includes a ``wss`` scheme fake validator, which was introduced in pull request `1377`_ as part of issues `1375`_, `1237`_, and others.
+  This "life hack" for self-signed SSL certificates is available starting from version `20.0`_.
+  However, it will be either removed or reworked in future releases. For further details, refer to the :ref:`ssl-errors` section.
+.. [#f4] IP allowed/blocked lists are enforced on the *WebSocket* upgrade request.
+  The ":ref:`Security Options <routing-security-options>`" feature has been supported since version `25.0`_, as a result of fixing bug `2403`_ in pull request `2406`_.
+.. [#f5] If requested, we might explore options for implementing basic authentication.
+.. [#f6] The :ref:`Sample <ws-sample>` was introduced for issue `2386`_ and implemented in pull request `2387`_, as part of version `25.0`_.
+
+.. _Program: https://github.com/ThreeMammals/Ocelot/blob/main/samples/WebSocket/Program.cs
+.. _ocelot.json: https://github.com/ThreeMammals/Ocelot/blob/main/samples/WebSocket/ocelot.json
+.. _WebSocketMiddleware: https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.websockets.websocketmiddleware
+
+.. _212: https://github.com/ThreeMammals/Ocelot/issues/212
+.. _344: https://github.com/ThreeMammals/Ocelot/issues/344
+.. _1237: https://github.com/ThreeMammals/Ocelot/issues/1237
+.. _1375: https://github.com/ThreeMammals/Ocelot/issues/1375
+.. _1377: https://github.com/ThreeMammals/Ocelot/pull/1377
+.. _1707: https://github.com/ThreeMammals/Ocelot/issues/1707
+.. _2386: https://github.com/ThreeMammals/Ocelot/issues/2386
+.. _2387: https://github.com/ThreeMammals/Ocelot/pull/2387
+.. _2403: https://github.com/ThreeMammals/Ocelot/issues/2403
+.. _2406: https://github.com/ThreeMammals/Ocelot/pull/2406
+
+.. _5.3.0: https://github.com/ThreeMammals/Ocelot/releases/tag/5.3.0
+.. _8.0.7: https://github.com/ThreeMammals/Ocelot/releases/tag/8.0.7
+.. _20.0: https://github.com/ThreeMammals/Ocelot/releases/tag/20.0.0
+.. _25.0: https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.0
+
+.. |octocat| image:: https://github.githubassets.com/images/icons/emoji/octocat.png
+  :alt: octocat
+  :height: 25
+  :class: img-valign-middle
